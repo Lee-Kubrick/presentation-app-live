@@ -20,7 +20,7 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
 
   // Connect to the running server
-  socket = io("http://localhost:5000");
+  const socket = io("https://presentation-app-live.onrender.com");
 
   // When the server tells us there are votes
   socket.on("update_votes", (voteData) => {
