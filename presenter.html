@@ -51,10 +51,18 @@ function draw() {
   fill('#00bfff');
   for (let id in dots) {
     let d = dots[id];
+
+    // Smooth move toward target
     d.x += (d.targetX - d.x) * 0.05;
     d.y += (d.targetY - d.y) * 0.05;
-    circle(d.x, d.y, 14);
-  }
+
+    // Add vibration effect
+    let shakeX = random(-1.5, 1.5);
+    let shakeY = random(-1.5, 1.5);
+
+    circle(d.x + shakeX, d.y + shakeY, 14);
+}
+
 
   // Draw category labels
   fill(255);
