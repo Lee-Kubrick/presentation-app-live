@@ -25,25 +25,20 @@ function setup() {
 
   // When the server tells us there are votes
   socket.on("update_votes", (voteData) => {
-    const spacing = width / (options.length + 1);
-    for (let user_id in voteData) {
-      let choice = voteData[user_id];
-      let targetX = spacing * (choice + 1);
-      let targetY = height / 2 + random(-40, 40);
+  for (let user_id in voteData) {
+    const choice = voteData[user_id];
 
-      if (!dots[user_id]) {
-        dots[user_id] = {
-          x: random(width),
-          y: random(height),
-          targetX: targetX,
-          targetY: targetY
-        };
-      } else {
-        dots[user_id].targetX = targetX;
-        dots[user_id].targetY = targetY;
-      }
+    if (!dots[user_id]) {
+      dots[user_id] = {
+        x: random(width),
+        y: random(height),
+        choice: choice
+      };
     }
-  });
+    dots[user_id].choice = choice;
+  }
+});
+
 }
 
 function draw() {
@@ -51,31 +46,47 @@ function draw() {
   noStroke();
   fill('#00bfff');
 
-  wigglePhase += 0.05; // this controls speed of breathing
+  wigglePhase += 0.05;
+  let spacing = width / (options.length + 1);
+
+  // Group dots by column
+  let groups = {};
 
   for (let id in dots) {
-    let d = dots[id];
+    const choice = dots[id].choice;
+    if (!groups[choice]) groups[choice] = [];
+    groups[choice].push(id);
+  }
 
-    // Smooth movement toward the target
-    d.x += (d.targetX - d.x) * 0.05;
-    d.y += (d.targetY - d.y) * 0.05;
+  // Draw each group
+  for (let col in groups) {
+    const dotIds = groups[col];
+    const colX = spacing * (parseInt(col) + 1);
+    for (let i = 0; i < dotIds.length; i++) {
+      const id = dotIds[i];
 
-    // Group wiggle effect — sin wave
-    let offsetX = sin(wigglePhase) * 2;
-    let offsetY = cos(wigglePhase) * 2;
+      let d = dots[id];
+      let targetX = colX;
+      let targetY = height / 2 + (i - dotIds.length / 2) * 18; // vertical stacking
 
-    circle(d.x + offsetX, d.y + offsetY, 14);
+      d.x += (targetX - d.x) * 0.2;
+      d.y += (targetY - d.y) * 0.2;
+
+      let wiggle = sin(wigglePhase + i * 0.3) * 2;
+
+      circle(d.x + wiggle, d.y, 14);
+    }
   }
 
   // Draw labels
   fill(255);
   textSize(16);
   textAlign(CENTER);
-  let spacing = width / (options.length + 1);
   for (let i = 0; i < options.length; i++) {
     text(options[i], spacing * (i + 1), height - 30);
   }
 }
+
 
 </script>
 </body>
