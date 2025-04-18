@@ -15,6 +15,7 @@
 let socket;
 let dots = {};  // { user_id: {x, y, targetX, targetY} }
 let options = ["<1.52M", "1.53–1.60M", "1.61–1.73M", "1.74–1.85M", "1.86–1.96M", ">1.96M"];
+let wigglePhase = 0;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -49,22 +50,24 @@ function draw() {
   background(0);
   noStroke();
   fill('#00bfff');
+
+  wigglePhase += 0.05; // this controls speed of breathing
+
   for (let id in dots) {
     let d = dots[id];
 
-    // Smooth move toward target
+    // Smooth movement toward the target
     d.x += (d.targetX - d.x) * 0.05;
     d.y += (d.targetY - d.y) * 0.05;
 
-    // Add vibration effect
-    let shakeX = random(-1.5, 1.5);
-    let shakeY = random(-1.5, 1.5);
+    // Group wiggle effect — sin wave
+    let offsetX = sin(wigglePhase) * 2;
+    let offsetY = cos(wigglePhase) * 2;
 
-    circle(d.x + shakeX, d.y + shakeY, 14);
-}
+    circle(d.x + offsetX, d.y + offsetY, 14);
+  }
 
-
-  // Draw category labels
+  // Draw labels
   fill(255);
   textSize(16);
   textAlign(CENTER);
@@ -73,6 +76,7 @@ function draw() {
     text(options[i], spacing * (i + 1), height - 30);
   }
 }
+
 </script>
 </body>
 </html>
