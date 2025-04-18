@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live Poll Presenter</title>
+  <!-- Load p5.js for drawing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <!-- Load Socket.IO to connect with Python server -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; background: black; }
+  </style>
+</head>
+<body>
+<script>
+let socket;
+let dots = {};  // { user_id: {x, y, targetX, targetY} }
+let options = ["<1.52M", "1.53–1.60M", "1.61–1.73M", "1.74–1.85M", "1.86–1.96M", ">1.96M"];
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+
+  // Connect to the running server
+  socket = io("http://localhost:5000");
+
+  // When the server tells us there are votes
+  socket.on("update_votes", (voteData) => {
+    const spacing = width / (options.length + 1);
+    for (let user_id in voteData) {
+      let choice = voteData[user_id];
+      let targetX = spacing * (choice + 1);
+      let targetY = height / 2 + random(-40, 40);
+
+      if (!dots[user_id]) {
+        dots[user_id] = {
+          x: random(width),
+          y: random(height),
+          targetX: targetX,
+          targetY: targetY
+        };
+      } else {
+        dots[user_id].targetX = targetX;
+        dots[user_id].targetY = targetY;
+      }
+    }
+  });
+}
+
+function draw() {
+  background(0);
+  noStroke();
+  fill('#00bfff');
+  for (let id in dots) {
+    let d = dots[id];
+    d.x += (d.targetX - d.x) * 0.05;
+    d.y += (d.targetY - d.y) * 0.05;
+    circle(d.x, d.y, 14);
+  }
+
+  // Draw category labels
+  fill(255);
+  textSize(16);
+  textAlign(CENTER);
+  let spacing = width / (options.length + 1);
+  for (let i = 0; i < options.length; i++) {
+    text(options[i], spacing * (i + 1), height - 30);
+  }
+}
+</script>
+</body>
+</html>

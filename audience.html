@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live Voting</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 100px;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      margin: 10px;
+      background: deepskyblue;
+      border: none;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    h1 {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+<h1>How tall are you?</h1>
+<div id="buttons"></div>
+
+<script>
+const options = [
+  "<1.52M", "1.53–1.60M", "1.61–1.73M", "1.74–1.85M", "1.86–1.96M", ">1.96M"
+];
+const socket = io("http://localhost:5000");
+const user_id = Math.random().toString(36).substring(2, 10); // Random user ID
+
+const container = document.getElementById('buttons');
+
+// Create buttons dynamically
+options.forEach((text, index) => {
+  const btn = document.createElement("button");
+  btn.innerText = text;
+  btn.onclick = () => {
+    socket.emit('submit_vote', {
+      user_id: user_id,
+      choice: index
+    });
+    btn.style.background = "green";  // Visual feedback
+  };
+  container.appendChild(btn);
+});
+</script>
+
+</body>
+</html>
