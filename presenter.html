@@ -27,7 +27,6 @@ function setup() {
   socket.on("update_votes", (voteData) => {
   for (let user_id in voteData) {
     const choice = voteData[user_id];
-
     if (!dots[user_id]) {
       dots[user_id] = {
         x: random(width),
@@ -46,35 +45,42 @@ function draw() {
   noStroke();
   fill('#00bfff');
 
-  wigglePhase += 0.05;
-  let spacing = width / (options.length + 1);
+  wigglePhase += 0.05; // For heartbeat pulse
+  const spacing = width / (options.length + 1);
+  const pulse = 14 + sin(wigglePhase) * 2; // Circle radius varies together
 
-  // Group dots by column
-  let groups = {};
-
+  // Group user IDs by choice
+  let grouped = {};
   for (let id in dots) {
     const choice = dots[id].choice;
-    if (!groups[choice]) groups[choice] = [];
-    groups[choice].push(id);
+    if (!grouped[choice]) grouped[choice] = [];
+    grouped[choice].push(id);
   }
 
-  // Draw each group
-  for (let col in groups) {
-    const dotIds = groups[col];
-    const colX = spacing * (parseInt(col) + 1);
-    for (let i = 0; i < dotIds.length; i++) {
-      const id = dotIds[i];
+  // Render each group
+  for (let col in grouped) {
+    const ids = grouped[col];
+    const baseX = spacing * (parseInt(col) + 1);
+    const baseY = height / 2;
 
-      let d = dots[id];
-      let targetX = colX;
-      let targetY = height / 2 + (i - dotIds.length / 2) * 18; // vertical stacking
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
 
+      // Compute row/col in grid
+      const gridCols = 10;
+      const row = Math.floor(i / gridCols);
+      const colOffset = i % gridCols;
+
+      // Grid spacing
+      const gridSpacing = 18;
+      const targetX = baseX + (colOffset - gridCols / 2) * gridSpacing;
+      const targetY = baseY + (row - 2) * gridSpacing;
+
+      const d = dots[id];
       d.x += (targetX - d.x) * 0.2;
       d.y += (targetY - d.y) * 0.2;
 
-      let wiggle = sin(wigglePhase + i * 0.3) * 2;
-
-      circle(d.x + wiggle, d.y, 14);
+      circle(d.x, d.y, pulse);
     }
   }
 
@@ -86,6 +92,7 @@ function draw() {
     text(options[i], spacing * (i + 1), height - 30);
   }
 }
+
 
 
 </script>
