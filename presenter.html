@@ -1,150 +1,173 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Live Poll Presenter</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <style>
-    body { margin: 0; overflow: hidden; background: black; }
-    #controls {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-      text-align: center;
-    }
-    button {
-      padding: 12px 24px;
-      font-size: 16px;
-      margin: 0 10px;
-      background: #00bfff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #question-label {
-      position: absolute;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: white;
-      font-size: 24px;
-      font-family: sans-serif;
-      text-align: center;
-      z-index: 10;
-    }
-  </style>
+    <title>Live Presenter</title>
+    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { margin: 0; font-family: Arial; background: #000; color: white; overflow: hidden; }
+        #questionBox {
+            position: absolute; top: 20px; left: 30px;
+            font-size: 28px; color: white;
+        }
+        #nextBtn {
+            position: absolute; top: 20px; right: 30px;
+            background-color: #00bcd4; color: black;
+            border: none; font-size: 18px; padding: 12px 20px;
+            border-radius: 8px; cursor: pointer;
+        }
+        canvas { background: black; display: block; }
+        .charts { display: none; padding: 40px; }
+        .charts canvas { margin: 20px auto; display: block; }
+    </style>
 </head>
 <body>
-<div id="question-label">Loading question...</div>
-<div id="controls">
-  <button onclick="nextQuestion()">Next Question</button>
-</div>
+    <div id="questionBox">Loading...</div>
+    <button id="nextBtn">Next</button>
+    <canvas id="dotCanvas" width="1000" height="600"></canvas>
+
+    <div class="charts" id="summaryCharts">
+        <canvas id="chart1" width="400" height="300"></canvas>
+        <canvas id="chart2" width="400" height="300"></canvas>
+        <canvas id="chart3" width="400" height="300"></canvas>
+        <canvas id="chart4" width="400" height="300"></canvas>
+    </div>
+
 <script>
-let socket;
-let dots = {};
-let currentQuestion = 0;
-let questions = [
-  "How old are you?",
-  "What’s your favorite time to scroll TikTok?",
-  "How many hours do you spend on screens daily?",
-  "Your dream weekend looks like...?",
-  "What social platform do you vibe with most?",
-  "Your vibe is more...",
-  "What school subject do you like the most?",
-  "How do you learn best?",
-  "What music gets you hyped?",
-  "Would you let AI write your homework?"
+const questions = [
+    "What's your favorite school subject?",
+    "What’s your vibe?",
+    "Which platform do you use most?",
+    "What's your learning style?",
+    "What do weekends look like?",
+    "What kind of music do you vibe with?",
+    "How do you feel about group projects?",
+    "Favorite snack during class?",
+    "Do you think data is fun?",
+    "Would you let AI write your homework?"
 ];
-let optionsMap = {
-  0: ['<13', '13–14', '15–16', '17–18', '>18'],
-  1: ['Before bed', 'Lunch', 'After school', 'During class 😏', 'Never'],
-  2: ['<2', '2–4', '4–6', '6–8', '8+'],
-  3: ['Gaming', 'Netflix', 'Sports', 'Outside', 'Sleeping'],
-  4: ['TikTok', 'Snapchat', 'Instagram', 'YouTube', 'Discord'],
-  5: ['Introvert', 'Extrovert', 'Depends on the day'],
-  6: ['Math', 'Science', 'English', 'Art', 'Gym'],
-  7: ['Visual', 'Hands-on', 'Listening', 'Reading/Writing'],
-  8: ['Hip-hop', 'Pop', 'Rock', 'Chill', 'EDM'],
-  9: ['Absolutely', 'Maybe', 'No way', 'Already did 🤫']
+
+const socket = io("https://presentation-app-server.onrender.com"); // Replace with actual
+const canvas = document.getElementById("dotCanvas");
+const ctx = canvas.getContext("2d");
+const summaryDiv = document.getElementById("summaryCharts");
+const questionBox = document.getElementById("questionBox");
+const nextBtn = document.getElementById("nextBtn");
+
+let currentQuestion = -1;
+let dots = [];
+
+socket.on("connect", () => {
+    console.log("Presenter connected");
+});
+
+socket.on("update_votes", (votes) => {
+    dots = Object.values(votes).filter(v => v.question === currentQuestion).map((v, i) => ({
+        x: 300 + (v.choice * 120) + Math.random()*50,
+        y: 200 + (i % 10) * 20,
+        r: 10 + Math.random()*4
+    }));
+});
+
+function drawDots() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let dot of dots) {
+        ctx.beginPath();
+        ctx.arc(dot.x + Math.sin(Date.now()/300)*3, dot.y, dot.r, 0, Math.PI*2);
+        ctx.fillStyle = "#00d8ff";
+        ctx.fill();
+    }
+    requestAnimationFrame(drawDots);
+}
+
+drawDots();
+
+nextBtn.onclick = () => {
+    currentQuestion++;
+    if (currentQuestion >= questions.length) {
+        document.getElementById("dotCanvas").style.display = "none";
+        nextBtn.style.display = "none";
+        questionBox.style.display = "none";
+        summaryDiv.style.display = "block";
+        renderSummary();
+    } else {
+        questionBox.innerText = questions[currentQuestion];
+        socket.emit("set_question", currentQuestion);
+    }
 };
 
-let wigglePhase = 0;
-function setup() {
-  createCanvas(windowWidth, windowHeight);
-  socket = io("https://presentation-app-live.onrender.com");
+function renderSummary() {
+    fetch("survey_result_data.json")
+        .then(res => res.json())
+        .then(data => {
+            // 1. Learning Style Pie
+            new Chart(document.getElementById("chart1"), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(data.learning_type),
+                    datasets: [{
+                        data: Object.values(data.learning_type),
+                        backgroundColor: ['#42a5f5','#66bb6a','#ffa726','#ab47bc']
+                    }]
+                },
+                options: { plugins: { title: { display: true, text: 'Learning Style Distribution' } } }
+            });
 
-  socket.on("update_votes", (voteData) => {
-    for (let user_id in voteData) {
-      const { choice, question } = voteData[user_id];
-      if (question !== currentQuestion) continue;
-      if (!dots[user_id]) {
-        dots[user_id] = { x: random(width), y: random(height), choice };
-      }
-      dots[user_id].choice = choice;
-    }
-  });
+            // 2. Emoji Bar
+            new Chart(document.getElementById("chart2"), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(data.weekend),
+                    datasets: [{
+                        data: Object.values(data.weekend),
+                        backgroundColor: '#00acc1'
+                    }]
+                },
+                options: {
+                    plugins: { title: { display: true, text: 'Weekend Vibe (Emoji Style)' }},
+                    indexAxis: 'y'
+                }
+            });
 
-  updateQuestionText();
-  socket.emit('set_question', currentQuestion);
-}
+            // 3. Platform Usage
+            new Chart(document.getElementById("chart3"), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(data.platform),
+                    datasets: [{
+                        label: 'Your Group',
+                        data: Object.values(data.platform),
+                        backgroundColor: '#42a5f5'
+                    },{
+                        label: 'National Avg',
+                        data: [0.25,0.2,0.2,0.25,0.1],
+                        backgroundColor: '#9e9e9e'
+                    }]
+                },
+                options: { plugins: { title: { display: true, text: 'Platform Use vs National Avg' } } }
+            });
 
-function draw() {
-  background(0);
-  fill('#00bfff');
-  wigglePhase += 0.05;
-  let spacing = width / (optionsMap[currentQuestion].length + 1);
-
-  // Group dots by choice
-  let grouped = {};
-  for (let id in dots) {
-    const choice = dots[id].choice;
-    if (!grouped[choice]) grouped[choice] = [];
-    grouped[choice].push(id);
-  }
-
-  // Draw dot groups
-  for (let col in grouped) {
-    const ids = grouped[col];
-    const baseX = spacing * (parseInt(col) + 1);
-    const baseY = height / 2;
-    for (let i = 0; i < ids.length; i++) {
-      const id = ids[i];
-      const gridCols = 10;
-      const row = Math.floor(i / gridCols);
-      const colOffset = i % gridCols;
-      const gridSpacing = 18;
-      const targetX = baseX + (colOffset - gridCols / 2) * gridSpacing;
-      const targetY = baseY + (row - 2) * gridSpacing;
-      const d = dots[id];
-      d.x += (targetX - d.x) * 0.2;
-      d.y += (targetY - d.y) * 0.2;
-      const pulse = 14 + sin(wigglePhase) * 2;
-      circle(d.x, d.y, pulse);
-    }
-  }
-
-  // Draw labels
-  fill(255);
-  textSize(16);
-  textAlign(CENTER);
-  for (let i = 0; i < optionsMap[currentQuestion].length; i++) {
-    text(optionsMap[currentQuestion][i], spacing * (i + 1), height - 30);
-  }
-}
-
-function updateQuestionText() {
-  document.getElementById('question-label').innerText = questions[currentQuestion];
-}
-
-function nextQuestion() {
-  currentQuestion++;
-  dots = {};  // clear previous answers for new view
-  if (currentQuestion >= questions.length) currentQuestion = 0;
-  updateQuestionText();
-  socket.emit('set_question', currentQuestion);
+            // 4. AI Attitude by Age
+            const ages = Object.keys(data.ai_attitude_by_age["Absolutely"]);
+            const attitudes = Object.keys(data.ai_attitude_by_age);
+            const datasets = attitudes.map(att => ({
+                label: att,
+                data: ages.map(age => data.ai_attitude_by_age[att][age] || 0),
+                stack: 'a'
+            }));
+            new Chart(document.getElementById("chart4"), {
+                type: 'bar',
+                data: {
+                    labels: ages,
+                    datasets: datasets
+                },
+                options: {
+                    plugins: { title: { display: true, text: 'AI Attitude by Age Group' }},
+                    responsive: true
+                }
+            });
+        });
 }
 </script>
 </body>
