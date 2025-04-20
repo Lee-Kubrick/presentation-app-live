@@ -43,9 +43,8 @@
 <div id="thankyou">🎉 Thank you so much for your participation! 🎉</div>
 
 <script>
-  const socket = io("https://presentation-app-server.onrender.com"); // Match presenter server URL
+  const socket = io("https://presentation-app-server.onrender.com"); // Same as in presenter.html
   const user_id = Math.random().toString(36).substring(2, 10);
-  let currentQuestionIndex = 0;
 
   const questions = [
     { q: "How old are you?", a: ["<13", "13–14", "15–16", "17–18", "18+"] },
@@ -60,6 +59,8 @@
     { q: "Would you let AI write your homework?", a: ["Absolutely", "Maybe", "No way", "Already did 🤫"] }
   ];
 
+  let currentQuestionIndex = 0;
+
   function renderQuestion(index) {
     const q = questions[index];
     const questionDiv = document.getElementById("question");
@@ -67,21 +68,19 @@
     const thankyouDiv = document.getElementById("thankyou");
 
     if (index >= questions.length) {
-      // Show thank you
       questionDiv.style.display = "none";
       answersDiv.style.display = "none";
       thankyouDiv.style.display = "block";
       return;
     }
 
-    // Show question and buttons
     questionDiv.innerText = q.q;
     answersDiv.innerHTML = "";
-    thankyouDiv.style.display = "none";
     questionDiv.style.display = "block";
     answersDiv.style.display = "block";
+    thankyouDiv.style.display = "none";
 
-    q.a.forEach((choice, choiceIndex) => {
+    q.a.forEach((choice, i) => {
       const btn = document.createElement("button");
       btn.innerText = choice;
       btn.onclick = () => {
@@ -90,8 +89,8 @@
 
         socket.emit("submit_vote", {
           user_id: user_id,
-          question: currentQuestionIndex,
-          choice: choiceIndex
+          question: currentQuestionIndex, // Key change: use 'question' not 'question_index'
+          choice: i
         });
       };
       answersDiv.appendChild(btn);
@@ -99,15 +98,14 @@
   }
 
   socket.on("connect", () => {
-    socket.emit("join_audience", { user_id: user_id });
+    console.log("Connected as", user_id);
   });
 
-  socket.on("new_question", (index) => {
+  socket.on("set_question", (index) => {
     currentQuestionIndex = index;
     renderQuestion(index);
   });
 
-  // Initial load
   renderQuestion(currentQuestionIndex);
 </script>
 
