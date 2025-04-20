@@ -23,54 +23,137 @@
     <div class="thankyou" id="thankyou" style="display: none;">Thank you for your participation! 🎉</div>
 
 <script>
-    const questions = [
-        { q: "What's your favorite school subject?", options: ["Math", "Science", "English", "History", "Art"] },
-        { q: "What’s your vibe?", options: ["Introvert", "Extrovert", "Depends on the day"] },
-        { q: "Which platform do you use most?", options: ["TikTok", "Snapchat", "Instagram", "YouTube", "Discord"] },
-        { q: "What's your learning style?", options: ["Visual", "Hands-on", "Listening", "Reading/Writing"] },
-        { q: "What do weekends look like?", options: ["Gaming", "Netflix", "Sports", "Outside", "Sleeping"] },
-        { q: "What kind of music do you vibe with?", options: ["Hip-hop", "Pop", "Rock", "Chill", "EDM"] },
-        { q: "How do you feel about group projects?", options: ["Love it", "Hate it", "Meh"] },
-        { q: "Favorite snack during class?", options: ["Chips", "Candy", "Fruit", "Nothing", "Other"] },
-        { q: "Do you think data is fun?", options: ["Yes", "No", "Maybe", "It’s magic!"] },
-        { q: "Would you let AI write your homework?", options: ["Absolutely", "Maybe", "No way", "Already did 🤫"] }
-    ];
-
-    const socket = io("https://presentation-app-server.onrender.com"); // Update with actual server URL
-    const questionDiv = document.getElementById("question");
-    const choicesDiv = document.getElementById("choices");
-    const thankyouDiv = document.getElementById("thankyou");
-    const user_id = "user_" + Math.random().toString(36).substring(2, 10);
-
-    let currentQuestion = -1;
-
-    function renderQuestion(index) {
-        if (index >= questions.length) {
-            document.getElementById("main").style.display = "none";
-            thankyouDiv.style.display = "block";
-            return;
-        }
-        const q = questions[index];
-        questionDiv.innerText = q.q;
-        choicesDiv.innerHTML = '';
-        q.options.forEach((opt, i) => {
-            const btn = document.createElement("button");
-            btn.innerText = opt;
-            btn.onclick = () => {
-                socket.emit("submit_vote", {
-                    user_id: user_id,
-                    question: index,
-                    choice: i
-                });
-            };
-            choicesDiv.appendChild(btn);
-        });
+const questions = [
+    {
+        "q": "What's your favorite school subject?",
+        "options": [
+            "Math",
+            "Science",
+            "English",
+            "History",
+            "Art"
+        ]
+    },
+    {
+        "q": "What\u2019s your vibe?",
+        "options": [
+            "Introvert",
+            "Extrovert",
+            "Depends on the day"
+        ]
+    },
+    {
+        "q": "Which platform do you use most?",
+        "options": [
+            "TikTok",
+            "Snapchat",
+            "Instagram",
+            "YouTube",
+            "Discord"
+        ]
+    },
+    {
+        "q": "What's your learning style?",
+        "options": [
+            "Visual",
+            "Hands-on",
+            "Listening",
+            "Reading/Writing"
+        ]
+    },
+    {
+        "q": "What do weekends look like?",
+        "options": [
+            "Gaming",
+            "Netflix",
+            "Sports",
+            "Outside",
+            "Sleeping"
+        ]
+    },
+    {
+        "q": "What kind of music do you vibe with?",
+        "options": [
+            "Hip-hop",
+            "Pop",
+            "Rock",
+            "Chill",
+            "EDM"
+        ]
+    },
+    {
+        "q": "How do you feel about group projects?",
+        "options": [
+            "Love it",
+            "Hate it",
+            "Meh"
+        ]
+    },
+    {
+        "q": "Favorite snack during class?",
+        "options": [
+            "Chips",
+            "Candy",
+            "Fruit",
+            "Nothing",
+            "Other"
+        ]
+    },
+    {
+        "q": "Do you think data is fun?",
+        "options": [
+            "Yes",
+            "No",
+            "Maybe",
+            "It\u2019s magic!"
+        ]
+    },
+    {
+        "q": "Would you let AI write your homework?",
+        "options": [
+            "Absolutely",
+            "Maybe",
+            "No way",
+            "Already did \ud83e\udd2b"
+        ]
     }
+];  // Inserted custom 10 questions
 
-    socket.on("set_question", (index) => {
-        currentQuestion = index;
-        renderQuestion(index);
+const socket = io("https://presentation-app-server.onrender.com");  // Update to your actual Render server
+const questionDiv = document.getElementById("question");
+const choicesDiv = document.getElementById("choices");
+const thankyouDiv = document.getElementById("thankyou");
+const user_id = "user_" + Math.random().toString(36).substring(2, 10);
+
+let currentQuestion = -1;
+
+function renderQuestion(index) {
+    if (index >= questions.length) {
+        document.getElementById("main").style.display = "none";
+        thankyouDiv.style.display = "block";
+        return;
+    }
+    const q = questions[index];
+    questionDiv.innerText = q.q;
+    choicesDiv.innerHTML = '';
+    q.options.forEach((opt, i) => {
+        const btn = document.createElement("button");
+        btn.innerText = opt;
+        btn.onclick = () => {
+            socket.emit("submit_vote", {
+                user_id: user_id,
+                question: index,
+                choice: i
+            });
+        };
+        choicesDiv.appendChild(btn);
     });
+}
+
+socket.on("set_question", (index) => {
+    currentQuestion = index;
+    renderQuestion(index);
+});
 </script>
 </body>
 </html>
