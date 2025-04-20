@@ -43,7 +43,9 @@
 <div id="thankyou">🎉 Thank you so much for your participation! 🎉</div>
 
 <script>
-  const socket = io("https://presentation-app-server.onrender.com"); // ✅ make sure this matches presenter
+  // ✅ MUST MATCH YOUR LIVE SERVER URL
+  const socket = io("https://presentation-app-live.onrender.com");
+
   const user_id = Math.random().toString(36).substring(2, 10);
   let currentQuestionIndex = 0;
 
@@ -100,13 +102,13 @@
     console.log("Audience connected as", user_id);
   });
 
-  // ✅ FIXED: match event name with presenter.js
+  // ✅ CRUCIAL: This must match what the server and presenter emit
   socket.on("set_question", (index) => {
     currentQuestionIndex = index;
     renderQuestion(index);
   });
 
-  // Load first one manually in case there's no event yet
+  // Just in case server is not ready yet, show initial question
   renderQuestion(currentQuestionIndex);
 </script>
 
