@@ -1,0 +1,52 @@
+{
+  "learning_type": {
+    "Reading/Writing": 34,
+    "Listening": 27,
+    "Visual": 21,
+    "Hands-on": 18
+  },
+  "weekend": {
+    "Sleeping": 24,
+    "Outside": 23,
+    "Netflix": 21,
+    "Gaming": 17,
+    "Sports": 15
+  },
+  "platform": {
+    "TikTok": 0.23,
+    "YouTube": 0.22,
+    "Discord": 0.21,
+    "Instagram": 0.19,
+    "Snapchat": 0.15
+  },
+  "ai_attitude_by_age": {
+    "Absolutely": {
+      "13\u201314": 4,
+      "15\u201316": 11,
+      "17\u201318": 11,
+      "<13": 2,
+      ">18": 0
+    },
+    "Already did \ud83e\udd2b": {
+      "13\u201314": 7,
+      "15\u201316": 7,
+      "17\u201318": 8,
+      "<13": 3,
+      ">18": 2
+    },
+    "Maybe": {
+      "13\u201314": 7,
+      "15\u201316": 11,
+      "17\u201318": 3,
+      "<13": 0,
+      ">18": 1
+    },
+    "No way": {
+      "13\u201314": 10,
+      "15\u201316": 7,
+      "17\u201318": 3,
+      "<13": 1,
+      ">18": 2
+    }
+  }
+}
