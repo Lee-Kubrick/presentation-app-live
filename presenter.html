@@ -138,7 +138,7 @@ const summaryDiv = document.getElementById("summaryCharts");
 const questionBox = document.getElementById("questionBox");
 const nextBtn = document.getElementById("nextBtn");
 
-let currentQuestion = 0;
+let currentQuestion = -1;
 let dots = [];
 
 socket.on("connect", () => {
@@ -168,9 +168,42 @@ function drawDots() {
 
 drawDots();
 
+
 nextBtn.onclick = () => {
+    if (currentQuestion === -1) {
+        currentQuestion = 0;
+        questionBox.innerText = questions[currentQuestion].q;
+        socket.emit("set_question", currentQuestion);
+        return;
+    }
+
     currentQuestion++;
-    if (currentQuestion >= questions.length) {
+    
+if (currentQuestion === questions.length) {
+    document.getElementById("dotCanvas").style.display = "none";
+    nextBtn.innerText = "Next";
+    questionBox.innerText = "Visualization: Learning Style";
+    summaryDiv.style.display = "block";
+    renderSummary(0);
+    return;
+}
+if (currentQuestion === questions.length + 1) {
+    questionBox.innerText = "Visualization: Weekend Emoji Vibe";
+    renderSummary(1);
+    return;
+}
+if (currentQuestion === questions.length + 2) {
+    questionBox.innerText = "Visualization: Platform vs National Avg";
+    renderSummary(2);
+    return;
+}
+if (currentQuestion === questions.length + 3) {
+    questionBox.innerText = "Visualization: AI Attitude by Age";
+    renderSummary(3);
+    nextBtn.style.display = "none";
+    return;
+}
+
         document.getElementById("dotCanvas").style.display = "none";
         nextBtn.style.display = "none";
         questionBox.style.display = "none";
@@ -178,16 +211,22 @@ nextBtn.onclick = () => {
         renderSummary();
     } else {
         questionBox.innerText = questions[currentQuestion].q;
-    socket.emit("set_question", currentQuestion);
         socket.emit("set_question", currentQuestion);
     }
 };
 
-function renderSummary() {
+
+function renderSummary(index = 0) {
+
     fetch("survey_result_data.json")
         .then(res => res.json())
         .then(data => {
-            new Chart(document.getElementById("chart1"), {
+            
+if (index === 0) {
+    document.querySelectorAll('#summaryCharts canvas').forEach(c => c.style.display = 'none');
+    document.getElementById("chart1").style.display = 'block';
+    new Chart(document.getElementById("chart1"), {
+
                 type: 'pie',
                 data: {
                     labels: Object.keys(data.learning_type),
@@ -195,7 +234,12 @@ function renderSummary() {
                 },
                 options: { plugins: { title: { display: true, text: 'Learning Style Distribution' } } }
             });
-            new Chart(document.getElementById("chart2"), {
+            
+} else if (index === 1) {
+    document.querySelectorAll('#summaryCharts canvas').forEach(c => c.style.display = 'none');
+    document.getElementById("chart2").style.display = 'block';
+    new Chart(document.getElementById("chart2"), {
+
                 type: 'bar',
                 data: {
                     labels: Object.keys(data.weekend),
@@ -206,7 +250,12 @@ function renderSummary() {
                     indexAxis: 'y'
                 }
             });
-            new Chart(document.getElementById("chart3"), {
+            
+} else if (index === 2) {
+    document.querySelectorAll('#summaryCharts canvas').forEach(c => c.style.display = 'none');
+    document.getElementById("chart3").style.display = 'block';
+    new Chart(document.getElementById("chart3"), {
+
                 type: 'bar',
                 data: {
                     labels: Object.keys(data.platform),
@@ -226,7 +275,12 @@ function renderSummary() {
                     stack: 'a'
                 };
             });
-            new Chart(document.getElementById("chart4"), {
+            
+} else if (index === 3) {
+    document.querySelectorAll('#summaryCharts canvas').forEach(c => c.style.display = 'none');
+    document.getElementById("chart4").style.display = 'block';
+    new Chart(document.getElementById("chart4"), {
+
                 type: 'bar',
                 data: {
                     labels: ages,

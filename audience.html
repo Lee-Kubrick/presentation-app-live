@@ -128,13 +128,21 @@ const user_id = "user_" + Math.random().toString(36).substring(2, 10);
 let currentQuestion = -1;
 
 function renderQuestion(index) {
-    if (index >= questions.length) {
+    
+if (index >= questions.length) {
+    document.getElementById("main").style.display = "none";
+    thankyouDiv.innerText = "🎉 Thank you so much for your participation!";
+    thankyouDiv.style.display = "block";
+    return;
+}
+
         document.getElementById("main").style.display = "none";
         thankyouDiv.style.display = "block";
         return;
     }
     const q = questions[index];
     questionDiv.innerText = q.q;
+    currentQuestion = index;
     choicesDiv.innerHTML = '';
     q.options.forEach((opt, i) => {
         const btn = document.createElement("button");
@@ -152,7 +160,7 @@ function renderQuestion(index) {
 
 socket.on("set_question", (index) => {
     currentQuestion = index;
-    renderQuestion(index);
+    if (index >= 0) renderQuestion(index);
 });
 </script>
 </body>
