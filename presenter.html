@@ -138,7 +138,7 @@ const summaryDiv = document.getElementById("summaryCharts");
 const questionBox = document.getElementById("questionBox");
 const nextBtn = document.getElementById("nextBtn");
 
-let currentQuestion = -1;
+let currentQuestion = 0;
 let dots = [];
 
 socket.on("connect", () => {
@@ -178,6 +178,7 @@ nextBtn.onclick = () => {
         renderSummary();
     } else {
         questionBox.innerText = questions[currentQuestion].q;
+    socket.emit("set_question", currentQuestion);
         socket.emit("set_question", currentQuestion);
     }
 };
