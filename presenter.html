@@ -74,7 +74,7 @@ let optionsMap = {
 let wigglePhase = 0;
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  socket = io("https://your-app-name.onrender.com");
+  socket = io("https://presentation-app-live.onrender.com");
 
   socket.on("update_votes", (voteData) => {
     for (let user_id in voteData) {
