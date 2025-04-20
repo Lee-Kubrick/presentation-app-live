@@ -26,32 +26,87 @@
 </head>
 <body>
 
-<h1>How tall are you?</h1>
+<h1 id="question-text">Loading question...</h1>
 <div id="buttons"></div>
 
 <script>
-const options = [
-  "<1.52M", "1.53–1.60M", "1.61–1.73M", "1.74–1.85M", "1.86–1.96M", ">1.96M"
+const questions = [
+  {
+    question: "How old are you?",
+    options: ['<13', '13–14', '15–16', '17–18', '>18']
+  },
+  {
+    question: "What’s your favorite time to scroll TikTok?",
+    options: ['Before bed', 'Lunch', 'After school', 'During class 😏', 'Never']
+  },
+  {
+    question: "How many hours do you spend on screens daily?",
+    options: ['<2', '2–4', '4–6', '6–8', '8+']
+  },
+  {
+    question: "Your dream weekend looks like...?",
+    options: ['Gaming', 'Netflix', 'Sports', 'Outside', 'Sleeping']
+  },
+  {
+    question: "What social platform do you vibe with most?",
+    options: ['TikTok', 'Snapchat', 'Instagram', 'YouTube', 'Discord']
+  },
+  {
+    question: "Your vibe is more...",
+    options: ['Introvert', 'Extrovert', 'Depends on the day']
+  },
+  {
+    question: "What school subject do you like the most?",
+    options: ['Math', 'Science', 'English', 'Art', 'Gym']
+  },
+  {
+    question: "How do you learn best?",
+    options: ['Visual', 'Hands-on', 'Listening', 'Reading/Writing']
+  },
+  {
+    question: "What music gets you hyped?",
+    options: ['Hip-hop', 'Pop', 'Rock', 'Chill', 'EDM']
+  },
+  {
+    question: "Would you let AI write your homework?",
+    options: ['Absolutely', 'Maybe', 'No way', 'Already did 🤫']
+  }
 ];
-const socket = io("https://presentation-app-live.onrender.com");
-const user_id = Math.random().toString(36).substring(2, 10); // Random user ID
 
-const container = document.getElementById('buttons');
+let socket = io("https://your-app-name.onrender.com");
+const user_id = Math.random().toString(36).substring(2, 10);
+let currentQuestion = 0;
 
-// Create buttons dynamically
-options.forEach((text, index) => {
-  const btn = document.createElement("button");
-  btn.innerText = text;
-  btn.onclick = () => {
-    socket.emit('submit_vote', {
-      user_id: user_id,
-      choice: index
-    });
-    btn.style.background = "green";  // Visual feedback
-  };
-  container.appendChild(btn);
+function renderQuestion(index) {
+  const container = document.getElementById('buttons');
+  const title = document.getElementById('question-text');
+  container.innerHTML = '';
+  const q = questions[index];
+  title.innerText = q.question;
+  q.options.forEach((text, i) => {
+    const btn = document.createElement("button");
+    btn.innerText = text;
+    btn.onclick = () => {
+      socket.emit('submit_vote', {
+        user_id: user_id,
+        choice: i,
+        question: index
+      });
+      [...container.children].forEach(b => b.style.background = 'deepskyblue');
+      btn.style.background = "green";
+    };
+    container.appendChild(btn);
+  });
+}
+
+socket.on('connect', () => {
+  renderQuestion(currentQuestion);
+});
+
+socket.on('set_question', (index) => {
+  currentQuestion = index;
+  renderQuestion(currentQuestion);
 });
 </script>
-
 </body>
 </html>
