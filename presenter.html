@@ -2,54 +2,102 @@
 <html>
 <head>
   <title>Live Poll Presenter</title>
-  <!-- Load p5.js for drawing -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
-  <!-- Load Socket.IO to connect with Python server -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <style>
     body { margin: 0; overflow: hidden; background: black; }
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      text-align: center;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      margin: 0 10px;
+      background: #00bfff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #question-label {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-size: 24px;
+      font-family: sans-serif;
+      text-align: center;
+      z-index: 10;
+    }
   </style>
 </head>
 <body>
+<div id="question-label">Loading question...</div>
+<div id="controls">
+  <button onclick="nextQuestion()">Next Question</button>
+</div>
 <script>
 let socket;
-let dots = {};  // { user_id: {x, y, targetX, targetY} }
-let options = ["<1.52M", "1.53–1.60M", "1.61–1.73M", "1.74–1.85M", "1.86–1.96M", ">1.96M"];
-let wigglePhase = 0;
+let dots = {};
+let currentQuestion = 0;
+let questions = [
+  "How old are you?",
+  "What’s your favorite time to scroll TikTok?",
+  "How many hours do you spend on screens daily?",
+  "Your dream weekend looks like...?",
+  "What social platform do you vibe with most?",
+  "Your vibe is more...",
+  "What school subject do you like the most?",
+  "How do you learn best?",
+  "What music gets you hyped?",
+  "Would you let AI write your homework?"
+];
+let optionsMap = {
+  0: ['<13', '13–14', '15–16', '17–18', '>18'],
+  1: ['Before bed', 'Lunch', 'After school', 'During class 😏', 'Never'],
+  2: ['<2', '2–4', '4–6', '6–8', '8+'],
+  3: ['Gaming', 'Netflix', 'Sports', 'Outside', 'Sleeping'],
+  4: ['TikTok', 'Snapchat', 'Instagram', 'YouTube', 'Discord'],
+  5: ['Introvert', 'Extrovert', 'Depends on the day'],
+  6: ['Math', 'Science', 'English', 'Art', 'Gym'],
+  7: ['Visual', 'Hands-on', 'Listening', 'Reading/Writing'],
+  8: ['Hip-hop', 'Pop', 'Rock', 'Chill', 'EDM'],
+  9: ['Absolutely', 'Maybe', 'No way', 'Already did 🤫']
+};
 
+let wigglePhase = 0;
 function setup() {
   createCanvas(windowWidth, windowHeight);
+  socket = io("https://your-app-name.onrender.com");
 
-  // Connect to the running server
-  const socket = io("https://presentation-app-live.onrender.com");
-
-  // When the server tells us there are votes
   socket.on("update_votes", (voteData) => {
-  for (let user_id in voteData) {
-    const choice = voteData[user_id];
-    if (!dots[user_id]) {
-      dots[user_id] = {
-        x: random(width),
-        y: random(height),
-        choice: choice
-      };
+    for (let user_id in voteData) {
+      const { choice, question } = voteData[user_id];
+      if (question !== currentQuestion) continue;
+      if (!dots[user_id]) {
+        dots[user_id] = { x: random(width), y: random(height), choice };
+      }
+      dots[user_id].choice = choice;
     }
-    dots[user_id].choice = choice;
-  }
-});
+  });
 
+  updateQuestionText();
+  socket.emit('set_question', currentQuestion);
 }
 
 function draw() {
   background(0);
-  noStroke();
   fill('#00bfff');
+  wigglePhase += 0.05;
+  let spacing = width / (optionsMap[currentQuestion].length + 1);
 
-  wigglePhase += 0.05; // For heartbeat pulse
-  const spacing = width / (options.length + 1);
-  const pulse = 14 + sin(wigglePhase) * 2; // Circle radius varies together
-
-  // Group user IDs by choice
+  // Group dots by choice
   let grouped = {};
   for (let id in dots) {
     const choice = dots[id].choice;
@@ -57,29 +105,23 @@ function draw() {
     grouped[choice].push(id);
   }
 
-  // Render each group
+  // Draw dot groups
   for (let col in grouped) {
     const ids = grouped[col];
     const baseX = spacing * (parseInt(col) + 1);
     const baseY = height / 2;
-
     for (let i = 0; i < ids.length; i++) {
       const id = ids[i];
-
-      // Compute row/col in grid
       const gridCols = 10;
       const row = Math.floor(i / gridCols);
       const colOffset = i % gridCols;
-
-      // Grid spacing
       const gridSpacing = 18;
       const targetX = baseX + (colOffset - gridCols / 2) * gridSpacing;
       const targetY = baseY + (row - 2) * gridSpacing;
-
       const d = dots[id];
       d.x += (targetX - d.x) * 0.2;
       d.y += (targetY - d.y) * 0.2;
-
+      const pulse = 14 + sin(wigglePhase) * 2;
       circle(d.x, d.y, pulse);
     }
   }
@@ -88,13 +130,22 @@ function draw() {
   fill(255);
   textSize(16);
   textAlign(CENTER);
-  for (let i = 0; i < options.length; i++) {
-    text(options[i], spacing * (i + 1), height - 30);
+  for (let i = 0; i < optionsMap[currentQuestion].length; i++) {
+    text(optionsMap[currentQuestion][i], spacing * (i + 1), height - 30);
   }
 }
 
+function updateQuestionText() {
+  document.getElementById('question-label').innerText = questions[currentQuestion];
+}
 
-
+function nextQuestion() {
+  currentQuestion++;
+  dots = {};  // clear previous answers for new view
+  if (currentQuestion >= questions.length) currentQuestion = 0;
+  updateQuestionText();
+  socket.emit('set_question', currentQuestion);
+}
 </script>
 </body>
 </html>
