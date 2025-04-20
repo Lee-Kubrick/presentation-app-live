@@ -28,15 +28,22 @@
     button.selected {
       background-color: #28a745;
     }
+    #thankyou {
+      display: none;
+      font-size: 22px;
+      color: #333;
+      margin-top: 40px;
+    }
   </style>
 </head>
 <body>
 
 <h1 id="question">Loading...</h1>
 <div id="answers"></div>
+<div id="thankyou">🎉 Thank you so much for your participation! 🎉</div>
 
 <script>
-  const socket = io("https://presentation-app-live.onrender.com"); // <- Replace with your live Render URL
+  const socket = io("https://presentation-app-server.onrender.com"); // Match presenter server URL
   const user_id = Math.random().toString(36).substring(2, 10);
   let currentQuestionIndex = 0;
 
@@ -55,10 +62,24 @@
 
   function renderQuestion(index) {
     const q = questions[index];
-    document.getElementById("question").innerText = q.q;
-
+    const questionDiv = document.getElementById("question");
     const answersDiv = document.getElementById("answers");
+    const thankyouDiv = document.getElementById("thankyou");
+
+    if (index >= questions.length) {
+      // Show thank you
+      questionDiv.style.display = "none";
+      answersDiv.style.display = "none";
+      thankyouDiv.style.display = "block";
+      return;
+    }
+
+    // Show question and buttons
+    questionDiv.innerText = q.q;
     answersDiv.innerHTML = "";
+    thankyouDiv.style.display = "none";
+    questionDiv.style.display = "block";
+    answersDiv.style.display = "block";
 
     q.a.forEach((choice, choiceIndex) => {
       const btn = document.createElement("button");
@@ -69,20 +90,24 @@
 
         socket.emit("submit_vote", {
           user_id: user_id,
-          question_index: currentQuestionIndex,
-          choice_index: choiceIndex
+          question: currentQuestionIndex,
+          choice: choiceIndex
         });
       };
       answersDiv.appendChild(btn);
     });
   }
 
+  socket.on("connect", () => {
+    socket.emit("join_audience", { user_id: user_id });
+  });
+
   socket.on("new_question", (index) => {
     currentQuestionIndex = index;
     renderQuestion(index);
   });
 
-  // Load first question initially
+  // Initial load
   renderQuestion(currentQuestionIndex);
 </script>
 
