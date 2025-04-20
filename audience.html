@@ -1,167 +1,87 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live Voting</title>
-    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
-    <style>
-        body { font-family: Arial; text-align: center; padding: 50px; background: #fff; }
-        .question { font-size: 24px; margin-bottom: 20px; }
-        .choices button {
-            margin: 10px; padding: 15px 30px;
-            font-size: 18px; cursor: pointer; border: none;
-            background-color: #007BFF; color: white; border-radius: 8px;
-        }
-        .thankyou { font-size: 28px; margin-top: 40px; color: #444; }
-    </style>
+  <title>Live Voting</title>
+  <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: white;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #questionBox {
+      max-width: 90%;
+    }
+    .option {
+      display: block;
+      background: #00bcd4;
+      color: white;
+      padding: 14px 20px;
+      margin: 10px auto;
+      border: none;
+      border-radius: 6px;
+      font-size: 18px;
+      width: 90%;
+      max-width: 300px;
+      cursor: pointer;
+    }
+    .thankyou {
+      font-size: 26px;
+      color: #222;
+    }
+  </style>
 </head>
 <body>
-    <div id="main">
-        <div class="question" id="question">Loading question...</div>
-        <div class="choices" id="choices"></div>
-    </div>
-    <div class="thankyou" id="thankyou" style="display: none;">Thank you for your participation! 🎉</div>
+  <div id="questionBox"><h2>Loading question…</h2></div>
 
 <script>
 const questions = [
-    {
-        "q": "What's your favorite school subject?",
-        "options": [
-            "Math",
-            "Science",
-            "English",
-            "History",
-            "Art"
-        ]
-    },
-    {
-        "q": "What\u2019s your vibe?",
-        "options": [
-            "Introvert",
-            "Extrovert",
-            "Depends on the day"
-        ]
-    },
-    {
-        "q": "Which platform do you use most?",
-        "options": [
-            "TikTok",
-            "Snapchat",
-            "Instagram",
-            "YouTube",
-            "Discord"
-        ]
-    },
-    {
-        "q": "What's your learning style?",
-        "options": [
-            "Visual",
-            "Hands-on",
-            "Listening",
-            "Reading/Writing"
-        ]
-    },
-    {
-        "q": "What do weekends look like?",
-        "options": [
-            "Gaming",
-            "Netflix",
-            "Sports",
-            "Outside",
-            "Sleeping"
-        ]
-    },
-    {
-        "q": "What kind of music do you vibe with?",
-        "options": [
-            "Hip-hop",
-            "Pop",
-            "Rock",
-            "Chill",
-            "EDM"
-        ]
-    },
-    {
-        "q": "How do you feel about group projects?",
-        "options": [
-            "Love it",
-            "Hate it",
-            "Meh"
-        ]
-    },
-    {
-        "q": "Favorite snack during class?",
-        "options": [
-            "Chips",
-            "Candy",
-            "Fruit",
-            "Nothing",
-            "Other"
-        ]
-    },
-    {
-        "q": "Do you think data is fun?",
-        "options": [
-            "Yes",
-            "No",
-            "Maybe",
-            "It\u2019s magic!"
-        ]
-    },
-    {
-        "q": "Would you let AI write your homework?",
-        "options": [
-            "Absolutely",
-            "Maybe",
-            "No way",
-            "Already did \ud83e\udd2b"
-        ]
-    }
-];  // Inserted custom 10 questions
+  { q: "How old are you?", options: ["<13", "13–14", "15–16", "17–18", "18+"] },
+  { q: "What’s your favorite time to scroll TikTok?", options: ["Before bed", "Lunch", "After school", "During class 😏", "Never"] },
+  { q: "How many hours do you spend on screens daily?", options: ["<2", "2–4", "4–6", "6–8", "8+"] },
+  { q: "Your dream weekend looks like…?", options: ["Gaming", "Netflix", "Sports", "Outside", "Sleeping"] },
+  { q: "What social platform do you vibe with most?", options: ["TikTok", "Snapchat", "Instagram", "YouTube", "Discord"] },
+  { q: "Your vibe is more…", options: ["Introvert", "Extrovert", "Depends on the day"] },
+  { q: "What school subject do you like the most?", options: ["Math", "Science", "English", "Art", "Gym"] },
+  { q: "How do you learn best?", options: ["Visual", "Hands-on", "Listening", "Reading/Writing"] },
+  { q: "What music gets you hyped?", options: ["Hip-hop", "Pop", "Rock", "Chill", "EDM"] },
+  { q: "Would you let AI write your homework?", options: ["Absolutely", "Maybe", "No way", "Already did"] }
+];
 
-const socket = io("https://presentation-app-server.onrender.com");  // Update to your actual Render server
-const questionDiv = document.getElementById("question");
-const choicesDiv = document.getElementById("choices");
-const thankyouDiv = document.getElementById("thankyou");
-const user_id = "user_" + Math.random().toString(36).substring(2, 10);
-
+const user_id = Math.random().toString(36).substring(2, 10);
+const socket = io("https://presentation-app-server.onrender.com");
+const box = document.getElementById("questionBox");
 let currentQuestion = -1;
 
-function renderQuestion(index) {
-    
-if (index >= questions.length) {
-    document.getElementById("main").style.display = "none";
-    thankyouDiv.innerText = "🎉 Thank you so much for your participation!";
-    thankyouDiv.style.display = "block";
-    return;
-}
-
-        document.getElementById("main").style.display = "none";
-        thankyouDiv.style.display = "block";
-        return;
-    }
-    const q = questions[index];
-    questionDiv.innerText = q.q;
-    currentQuestion = index;
-    choicesDiv.innerHTML = '';
-    q.options.forEach((opt, i) => {
-        const btn = document.createElement("button");
-        btn.innerText = opt;
-        btn.onclick = () => {
-            socket.emit("submit_vote", {
-                user_id: user_id,
-                question: index,
-                choice: i
-            });
-        };
-        choicesDiv.appendChild(btn);
-    });
-}
-
-socket.on("set_question", (index) => {
-    currentQuestion = index;
-    if (index >= 0) renderQuestion(index);
+socket.on("connect", () => {
+  console.log("Connected");
 });
+
+socket.on("set_question", index => {
+  currentQuestion = index;
+  if (index >= questions.length) {
+    box.innerHTML = "<div class='thankyou'>🎉 Thank you for your participation!</div>";
+    return;
+  }
+  const q = questions[index];
+  box.innerHTML = `<h2>${q.q}</h2>` + q.options.map((opt, i) => `
+    <button class="option" onclick="vote(${i})">${opt}</button>
+  `).join("");
+});
+
+function vote(choiceIndex) {
+  socket.emit("submit_vote", {
+    user_id: user_id,
+    question: currentQuestion,
+    choice: choiceIndex
+  });
+}
 </script>
 </body>
 </html>
